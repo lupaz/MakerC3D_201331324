@@ -39,33 +39,39 @@ precedence right POT;
 
 start with inicial;
 
-inicial     ::= {: ControlC3D.reiniciar(); :} logica:exp 
+inicial     ::= {: ControlC3D.reiniciar(); :} logica:Log
                     {: 
-                        RESULT = exp;
-                        ControlC3D.agregarC3D("//Último valor: " + exp.getCad());
+                        RESULT = Log;
+                        if(!Log.getSentencia().equals("")){
+                            ControlC3D.agregarLogica(Log.getSentencia(),Log.getTrue(),Log.getFalso());
+                        }else{
+                            ControlC3D.agregarC3D("//Ultimo temporal reconocido: "+Log.getCad());
+                        }
                     :};
 
            
 logica      ::= logica:izq OR logica:der
                     {: 
-                        String temp = ControlC3D.generaTemp();
-                        String c3d = temp + " = " + izq.getCad() + " || " + der.getCad() + ";\n";
-                        ControlC3D.agregarC3D(c3d);
-                        RESULT = new NodoC3D(temp); 
+                        RESULT = new NodoC3D();
+                        RESULT.setSentencia(izq.getSentencia()+"\n"+izq.getFalso()+":\n"+der.getSentencia());
+                        RESULT.setTrue(izq.getTrue());
+                        RESULT.addLabelTrue(der.getTrue());
+                        RESULT.setFalso(der.getFalso()); 
                     :}
             |   logica:izq AND logica:der
                     {: 
-                        String temp = ControlC3D.generaTemp();
-                        String c3d = temp + " = " + izq.getCad() + " && " + der.getCad() + ";\n";
-                        ControlC3D.agregarC3D(c3d);
-                        RESULT = new NodoC3D(temp); 
+                        RESULT = new NodoC3D();
+                        RESULT.setSentencia(izq.getSentencia()+"\n"+izq.getTrue()+":\n"+der.getSentencia());
+                        RESULT.setTrue(der.getTrue());
+                        RESULT.setFalso(izq.getFalso());
+                        RESULT.addLabelFalso(der.getFalso()); 
                     :}
             |   NOT logica:der
-                    {: 
-                        String temp = ControlC3D.generaTemp();
-                        String c3d = temp + " = !" + der.getCad() + ";\n";
-                        ControlC3D.agregarC3D(c3d);
-                        RESULT = new NodoC3D(temp); 
+                    {: //!(8>7 && 7<10 || 8==8) 
+                        RESULT = new NodoC3D();
+                        RESULT.setSentencia(der.getSentencia());
+                        RESULT.setTrue(der.getFalso());
+                        RESULT.setFalso(der.getTrue());
                     :}
             |   relacional:rel
                     {:
@@ -75,35 +81,59 @@ logica      ::= logica:izq OR logica:der
 relacional  ::= expresion:izq op_rel:op expresion:der
                     {: 
                         if(op.equals(">")){
-                            String temp = ControlC3D.generaTemp();
-                            String c3d = temp + " = " + izq.getCad() + " > " + der.getCad() + ";\n";
-                            ControlC3D.agregarC3D(c3d);
-                            RESULT = new NodoC3D(temp); 
+                            RESULT = new NodoC3D();
+                            String lTrue=ControlC3D.generarLabel();
+                            RESULT.setTrue(lTrue);
+                            String lFalso=ControlC3D.generarLabel();
+                            RESULT.setFalso(lFalso);
+                            String cuerpo ="if "+izq.getCad() + " > " + der.getCad()+" go to "+lTrue+"\n"
+                                   +"go to "+lFalso;
+                            RESULT.setSentencia(cuerpo);
                         }else if(op.equals("<")){
-                            String temp = ControlC3D.generaTemp();
-                            String c3d = temp + " = " + izq.getCad() + " < " + der.getCad() + ";\n";
-                            ControlC3D.agregarC3D(c3d);
-                            RESULT = new NodoC3D(temp);                         
+                            RESULT = new NodoC3D();
+                            String lTrue=ControlC3D.generarLabel();
+                            RESULT.setTrue(lTrue);
+                            String lFalso=ControlC3D.generarLabel();
+                            RESULT.setFalso(lFalso);
+                            String cuerpo ="if "+izq.getCad() + " < " + der.getCad()+" go to "+lTrue+"\n"
+                                   +"go to "+lFalso;
+                            RESULT.setSentencia(cuerpo);                        
                         }else if(op.equals(">=")){
-                            String temp = ControlC3D.generaTemp();
-                            String c3d = temp + " = " + izq.getCad() + " >= " + der.getCad() + ";\n";
-                            ControlC3D.agregarC3D(c3d);
-                            RESULT = new NodoC3D(temp);                         
+                            RESULT = new NodoC3D();
+                            String lTrue=ControlC3D.generarLabel();
+                            RESULT.setTrue(lTrue);
+                            String lFalso=ControlC3D.generarLabel();
+                            RESULT.setFalso(lFalso);
+                            String cuerpo ="if "+izq.getCad() + " >= " + der.getCad()+" go to "+lTrue+"\n"
+                                   +"go to "+lFalso;
+                            RESULT.setSentencia(cuerpo);                         
                         }else if(op.equals("<=")){
-                            String temp = ControlC3D.generaTemp();
-                            String c3d = temp + " = " + izq.getCad() + " <= " + der.getCad() + ";\n";
-                            ControlC3D.agregarC3D(c3d);
-                            RESULT = new NodoC3D(temp);                         
+                            RESULT = new NodoC3D();
+                            String lTrue=ControlC3D.generarLabel();
+                            RESULT.setTrue(lTrue);
+                            String lFalso=ControlC3D.generarLabel();
+                            RESULT.setFalso(lFalso);
+                            String cuerpo ="if "+izq.getCad() + " <= " + der.getCad()+" go to "+lTrue+"\n"
+                                   +"go to "+lFalso;
+                            RESULT.setSentencia(cuerpo);                         
                         }else if(op.equals("==")){
-                            String temp = ControlC3D.generaTemp();
-                            String c3d = temp + " = " + izq.getCad() + " == " + der.getCad() + ";\n";
-                            ControlC3D.agregarC3D(c3d);
-                            RESULT = new NodoC3D(temp);                    
+                            RESULT = new NodoC3D();
+                            String lTrue=ControlC3D.generarLabel();
+                            RESULT.setTrue(lTrue);
+                            String lFalso=ControlC3D.generarLabel();
+                            RESULT.setFalso(lFalso);
+                            String cuerpo ="if "+izq.getCad() + " == " + der.getCad()+" go to "+lTrue+"\n"
+                                   +"go to "+lFalso;
+                            RESULT.setSentencia(cuerpo);                    
                         }else{
-                            String temp = ControlC3D.generaTemp();
-                            String c3d = temp + " = " + izq.getCad() + " != " + der.getCad() + ";\n";
-                            ControlC3D.agregarC3D(c3d);
-                            RESULT = new NodoC3D(temp);
+                            RESULT = new NodoC3D();
+                            String lTrue=ControlC3D.generarLabel();
+                            RESULT.setTrue(lTrue);
+                            String lFalso=ControlC3D.generarLabel();
+                            RESULT.setFalso(lFalso);
+                            String cuerpo ="if "+izq.getCad() + " != " + der.getCad()+" go to "+lTrue+"\n"
+                                   +"go to "+lFalso;
+                            RESULT.setSentencia(cuerpo);
                         }
                         
                     :}
